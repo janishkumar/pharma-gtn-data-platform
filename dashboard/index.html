@@ -357,7 +357,7 @@ function products(s) {
 function disputes(s) {
   const rows = DATA.disputes.filter((r) => r.year === s.year);
   const names = { UOM_OUTLIER: "Units/Rx far above national median", TERMINATED_NDC: "NDC terminated before quarter",
-    PRE_MARKET: "Utilization before market date", NOT_COD: "DESI 5/6, not rebate-eligible", PRICE_OUTLIER: "Paid per unit far from NADAC" };
+    PRE_MARKET: "Utilization before market date", NOT_COD: "DESI 5/6, not rebate-eligible", INVALID_NDC: "Not a valid 11-digit NDC", PRICE_OUTLIER: "Paid per unit far from NADAC" };
   $("disputes").innerHTML = table(["Rule", "Lines", "Dollars at stake"],
     rows.map((r) => [`<code>${r.reason}</code><br><span class="sub">${names[r.reason] || ""}</span>`, r.lines.toLocaleString(), money(r.dollars)]), [1, 2]);
   const lines = DATA.dispute_lines.filter((r) => r.year === s.year).slice(0, 15);

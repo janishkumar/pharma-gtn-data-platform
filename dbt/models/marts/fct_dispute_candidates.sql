@@ -40,6 +40,11 @@ flagged as (
     where cod_status in ('05', '06')
 
     union all
+    select *, 'INVALID_NDC', format('NDC {} is not an 11-digit code', ndc)
+    from lines
+    where not regexp_full_match(ndc, '\d{11}')
+
+    union all
     select *, 'PRICE_OUTLIER',
         format('paid {:.2f}/unit vs NADAC {:.2f}', medicaid_reimbursed / units, nadac_q)
     from lines

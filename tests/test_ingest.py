@@ -145,3 +145,32 @@ def test_fetch_cpi_u_calls_each_window(tmp_path):
     assert rows == [(2013, 1, 1.0), (2023, 1, 1.0)]
     out = cpi.write(rows, tmp_path)
     assert duckdb.sql(f"select count(*) from '{out}'").fetchone()[0] == 2
+
+
+def test_cli_ingest_end_to_end_with_mocked_http(tmp_path, monkeypatch, capsys):
+    from gtn_platform import cli
+
+    catalog = [{"title": "State Drug Utilization Data 2025",
+                "distribution": [{"downloadURL": "https://x/sdud2025.csv"}]}]
+
+    def handler(request):
+        if request.url.path.endswith("/items"):
+            return httpx.Response(200, json=catalog)
+        if "bls.gov" in request.url.host:
+            return httpx.Response(200, json={"status": "REQUEST_SUCCEEDED", "Results": {
+                "series": [{"data": [{"year": "2025", "period": "M01", "value": "320.0"}]}]}})
+        body = SDUD_CSV.encode() if request.method == "GET" else b""
+        return httpx.Response(200, headers={"etag": '"v1"'}, content=body)
+
+    monkeypatch.setenv("GTN_DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(cli, "client", lambda: httpx.Client(transport=httpx.MockTransport(handler)))
+    cli.main(["ingest", "--sources", "sdud,cpi_u", "--years", "2025"])
+    cli.main(["ingest", "--sources", "sdud", "--years", "2025"])
+    out = capsys.readouterr().out
+    assert "sdud 2025: loaded" in out and "sdud 2025: unchanged" in out and "cpi_u: 1" in out
+    assert load_manifest(tmp_path)["sdud/2025"]["rows"] == 2
+
+    with pytest.raises(SystemExit):
+        cli.main(["ingest", "--sources", "bogus"])
+    with pytest.raises(SystemExit, match="no catalog entry"):
+        cli.main(["ingest", "--sources", "ful"])

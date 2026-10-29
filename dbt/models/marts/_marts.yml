@@ -50,7 +50,7 @@ models:
         data_tests:
           - accepted_values:
               arguments:
-                values: [UOM_OUTLIER, TERMINATED_NDC, PRE_MARKET, NOT_COD, PRICE_OUTLIER]
+                values: [UOM_OUTLIER, TERMINATED_NDC, PRE_MARKET, NOT_COD, INVALID_NDC, PRICE_OUTLIER]
       - {name: reason_detail, data_type: varchar}
       - {name: units, data_type: double}
       - {name: prescriptions, data_type: double}

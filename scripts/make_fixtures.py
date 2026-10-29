@@ -18,11 +18,12 @@ import duckdb
 # tests/test_pipeline.py for what each one is expected to show.
 NDCS = {
     "00002143380": "Trulicity: single source, NADAC priced, inflation penalty",
-    "00074433902": "Humira pen: single source with a long pre-NADAC price history",
-    "00093715698": "generic with a FUL weighted AMP",
-    "00591040910": "generic with a FUL weighted AMP",
-    "00026037950": "clotting factor (17.1% minimum), no NADAC price",
-    "00006022761": "innovator multiple source",
+    "00074433902": "Humira pen: single source with a pre-NADAC launch (baseline before 2013)",
+    "59148000713": "Abilify: innovator multiple source",
+    "00054327099": "fluticasone nasal spray: generic with a FUL weighted AMP",
+    "47335047583": "imatinib: generic with a FUL weighted AMP",
+    "00944304610": "Advate: clotting factor (17.1% minimum)",
+    "00006302602": "Keytruda: single source NADAC doesn't survey (priced from Medicaid paid)",
 }
 STATES = ("AK", "CA", "NY", "TX", "OH")
 SDUD_YEARS = (2016, 2023, 2024)
