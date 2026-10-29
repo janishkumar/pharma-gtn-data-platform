@@ -61,6 +61,25 @@ def collect(con: duckdb.DuckDBPyConnection) -> dict:
             from fct_rebate_liability where year = {latest_full}
             group by 1 order by 3 desc nulls last
         """),
+        "overall": rows(con, f"""
+            select sum(medicaid_reimbursed) as medicaid_reimbursed,
+                   sum(liability_point) / sum(medicaid_reimbursed) as ratio
+            from fct_rebate_liability where year = {latest_full}
+        """)[0],
+        "ful_rejected": rows(con, """
+            select count(*) filter (where ful_rejected) as rejected,
+                   count(*) filter (where ful_rejected or ful_amp is not null) as with_ful
+            from int_ndc_quarter
+        """)[0],
+        "top_dispute_lines": rows(con, f"""
+            select year, quarter, state, product_name, reason_code, reason_detail, units,
+                   prescriptions, median_units_per_rx, dollars_at_stake
+            from (select d.*, u.median_units_per_rx
+                  from fct_dispute_candidates as d
+                  join int_utilization as u using (state, ndc, quarter_start, utilization_type))
+            where year = {latest_full} and reason_code = 'UOM_OUTLIER'
+            order by dollars_at_stake desc limit 3
+        """),
         "capped_share_2023": con.execute("""
             select sum(units) filter (where is_capped) / sum(units)
             from fct_rebate_liability
@@ -126,6 +145,11 @@ def render(s: dict) -> str:
     ]
     for (g, f), by_bp in sorted(grid.items()):
         out.append(f"| {g:.0%} | {f:.2f} | " + " | ".join(money(by_bp[b]) for b in bps) + " |")
+    fr = s["ful_rejected"]
+    out += ["", f"Medicaid reimbursed, {y}: {money(s['overall']['medicaid_reimbursed'])}; "
+            f"rebate / reimbursed: {pct(s['overall']['ratio'])}.", "",
+            f"FUL AMPs rejected as more than 10x from NADAC: {fr['rejected']:,} of "
+            f"{fr['with_ful']:,} NDC-quarters with a FUL price."]
     out += ["", f"## AMP source, {y}", "", "| Source | Units | Liability |", "|---|---|---|"]
     out += [
         f"| {r['amp_source']} | {r['units']:,.0f} | {money(r['liability_point'])} |"
@@ -161,6 +185,15 @@ def render(s: dict) -> str:
     out += [
         f"| {r['reason_code']} | {r['lines']:,} | {money(r['dollars_at_stake'])} |"
         for r in s["disputes"]
+    ]
+    out += ["", f"Largest unit-of-measure flags, {y}:", "",
+            "| Quarter | State | Product | Units/Rx | National median | At stake |",
+            "|---|---|---|---|---|---|"]
+    out += [
+        f"| {r['year']} Q{r['quarter']} | {r['state']} | {r['product_name']} | "
+        f"{r['units'] / r['prescriptions']:,.1f} | {r['median_units_per_rx']:,.1f} | "
+        f"{money(r['dollars_at_stake'])} |"
+        for r in s["top_dispute_lines"]
     ]
     return "\n".join(out) + "\n"
 

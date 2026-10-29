@@ -25,6 +25,10 @@ Point $31.41B, high $35.60B. Priced unit share 99.6%.
 | 5% | 0.90 | $33.26B | $39.33B | $56.56B |
 | 5% | 1.00 | $36.92B | $43.67B | $62.81B |
 
+Medicaid reimbursed, 2025: $104.10B; rebate / reimbursed: 30.2%.
+
+FUL AMPs rejected as more than 10x from NADAC: 10,206 of 434,574 NDC-quarters with a FUL price.
+
 ## AMP source, 2025
 
 | Source | Units | Liability |
@@ -65,3 +69,11 @@ Share of priced 2023 units whose URA hit the 100% AMP cap: 0.0%
 | TERMINATED_NDC | 36,363 | $61.0M |
 | PRE_MARKET | 2 | $2,473 |
 | NOT_COD | 87 | $0 |
+
+Largest unit-of-measure flags, 2025:
+
+| Quarter | State | Product | Units/Rx | National median | At stake |
+|---|---|---|---|---|---|
+| 2025 Q2 | OR | SKYRIZI 150mg/1.0mL Pen | 30.2 | 1.0 | $27.7M |
+| 2025 Q2 | NY | Spiriva Respimat 60 Metered inhalations | 3,708.1 | 4.1 | $12.1M |
+| 2025 Q3 | NM | Vabysmo 6mg/0.05mL Prefilled Syringe | 9.4 | 0.1 | $5.3M |

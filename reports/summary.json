@@ -5,8 +5,8 @@
     "last_quarter": "2026-01-01",
     "lines": 30259849,
     "ndcs": 85916,
-    "units": 291624194527.055,
-    "medicaid_reimbursed": 551206012881.834,
+    "units": 291624194527.05396,
+    "medicaid_reimbursed": 551206012881.8289,
     "suppressed_line_share": 0.5090876362271338
   },
   "by_year": [
@@ -64,17 +64,17 @@
     {
       "amp_source": "FUL",
       "units": 22912342315.064003,
-      "liability_point": 310917524.8287517
+      "liability_point": 310917524.828751
     },
     {
       "amp_source": "NADAC",
-      "units": 19455581455.688995,
-      "liability_point": 25004609026.50982
+      "units": 19455581455.689003,
+      "liability_point": 25004609026.509953
     },
     {
       "amp_source": "REIMBURSED",
-      "units": 3811020682.3030043,
-      "liability_point": 6099176954.987944
+      "units": 3811020682.3029995,
+      "liability_point": 6099176954.987951
     },
     {
       "amp_source": "UNIT_MISMATCH",
@@ -83,34 +83,80 @@
     },
     {
       "amp_source": "NONE",
-      "units": 6171039.264000001,
+      "units": 6171039.264,
       "liability_point": 0.0
     }
   ],
   "category": [
     {
       "rebate_category": "S",
-      "medicaid_reimbursed": 83927879857.8,
-      "liability_point": 27271981964.97947,
-      "rebate_to_reimbursed": 0.324945441385946
+      "medicaid_reimbursed": 83927879857.79993,
+      "liability_point": 27271981964.979496,
+      "rebate_to_reimbursed": 0.3249454413859466
     },
     {
       "rebate_category": "I",
-      "medicaid_reimbursed": 8777115107.3,
-      "liability_point": 3179806904.7267156,
-      "rebate_to_reimbursed": 0.3622838331107272
+      "medicaid_reimbursed": 8777115107.300007,
+      "liability_point": 3179806904.726716,
+      "rebate_to_reimbursed": 0.362283833110727
     },
     {
       "rebate_category": "N",
-      "medicaid_reimbursed": 11357706003.279924,
-      "liability_point": 954470332.0476457,
-      "rebate_to_reimbursed": 0.08403724588151955
+      "medicaid_reimbursed": 11357706003.279943,
+      "liability_point": 954470332.0476452,
+      "rebate_to_reimbursed": 0.08403724588151937
     },
     {
       "rebate_category": null,
-      "medicaid_reimbursed": 36032423.26000001,
-      "liability_point": 8444304.572850093,
+      "medicaid_reimbursed": 36032423.260000005,
+      "liability_point": 8444304.572850091,
       "rebate_to_reimbursed": 0.23435294684230157
+    }
+  ],
+  "overall": {
+    "medicaid_reimbursed": 104098733391.64053,
+    "ratio": 0.30177796100686777
+  },
+  "ful_rejected": {
+    "rejected": 10206,
+    "with_ful": 434574
+  },
+  "top_dispute_lines": [
+    {
+      "year": 2025,
+      "quarter": 2,
+      "state": "OR",
+      "product_name": "SKYRIZI 150mg/1.0mL Pen",
+      "reason_code": "UOM_OUTLIER",
+      "reason_detail": "30.2 units/Rx vs national median 1.0",
+      "units": 3718.0,
+      "prescriptions": 123.0,
+      "median_units_per_rx": 1.0,
+      "dollars_at_stake": 27665852.692408036
+    },
+    {
+      "year": 2025,
+      "quarter": 2,
+      "state": "NY",
+      "product_name": "Spiriva Respimat 60 Metered inhalations",
+      "reason_code": "UOM_OUTLIER",
+      "reason_detail": "3708.1 units/Rx vs national median 4.1",
+      "units": 200238.0,
+      "prescriptions": 54.0,
+      "median_units_per_rx": 4.057844768346053,
+      "dollars_at_stake": 12085199.430517673
+    },
+    {
+      "year": 2025,
+      "quarter": 3,
+      "state": "NM",
+      "product_name": "Vabysmo 6mg/0.05mL Prefilled Syringe",
+      "reason_code": "UOM_OUTLIER",
+      "reason_detail": "9.4 units/Rx vs national median 0.1",
+      "units": 3135.55,
+      "prescriptions": 334.0,
+      "median_units_per_rx": 0.06052631578947368,
+      "dollars_at_stake": 5291568.436033516
     }
   ],
   "capped_share_2023": 4.011849466036698e-05,
@@ -256,6 +302,6 @@
   ],
   "dispute_lines_distinct": [
     45954,
-    237573691.08779064
+    237573691.0877906
   ]
 }
