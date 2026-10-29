@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: stg_sdud
+    columns:
+      - name: ndc
+        data_tests: [not_null]
+      - name: state
+        data_tests: [not_null]
+      - name: quarter
+        data_tests:
+          - accepted_values:
+              arguments: {values: [1, 2, 3, 4]}
+      - name: utilization_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["FFSU", "MCOU"]}
+  - name: stg_nadac
+    columns:
+      - name: ndc
+        data_tests: [not_null]
+      - name: as_of_date
+        data_tests: [not_null]
+  - name: stg_ful
+    columns:
+      - name: ndc
+        data_tests: [not_null]
+  - name: stg_drug_products
+    columns:
+      - name: ndc
+        data_tests: [not_null]
+      - name: drug_category
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["S", "I", "N"]}
+  - name: stg_cpi_u
+    columns:
+      - name: month_start
+        data_tests: [unique, not_null]

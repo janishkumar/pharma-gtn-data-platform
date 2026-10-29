@@ -1,0 +1,77 @@
+name: Data refresh
+
+# CMS posts SDUD quarterly (and reissues prior years), NADAC weekly, FUL monthly.
+# A monthly run picks up whatever changed; unchanged files are skipped via the manifest.
+on:
+  schedule:
+    - cron: "17 6 3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the data release
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GTN_DATA_DIR: ${{ github.workspace }}/data
+      GTN_DUCKDB_MEMORY: 10GB
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.14"
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen
+
+      - name: Restore raw data from the last run
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+          restore-keys: raw-
+      - name: Restore manifest
+        uses: actions/cache/restore@v4
+        with:
+          path: data/manifest.json
+          key: manifest-${{ github.run_id }}
+          restore-keys: manifest-
+
+      - name: Ingest changed source files
+        run: uv run gtn ingest
+      - name: Build warehouse and run all dbt tests
+        run: uv run gtn build
+      - name: Report
+        run: |
+          uv run gtn report --out reports
+          cat reports/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save raw data for next run
+        uses: actions/cache/save@v4
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+      - name: Save manifest
+        uses: actions/cache/save@v4
+        with:
+          path: data/manifest.json
+          key: manifest-${{ github.run_id }}
+
+      - name: Export marts
+        run: uv run python scripts/export_marts.py --out dist/marts
+
+      - name: Publish data release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="data-$(date -u +%Y-%m-%d)"
+          cp reports/summary.md data/manifest.json dist/marts/
+          gh release create "$tag" dist/marts/* \
+            --title "Data $(date -u +%Y-%m-%d)" \
+            --notes-file reports/summary.md

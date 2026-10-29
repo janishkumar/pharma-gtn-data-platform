@@ -1,0 +1,165 @@
+version: 2
+
+models:
+  - name: fct_rebate_liability
+    description: >
+      Base-scenario Medicaid rebate liability per state invoice line
+      (state x NDC x quarter x utilization type). Public-data estimate, not any
+      manufacturer's actual liability.
+    config:
+      contract: {enforced: true}
+    columns:
+      - {name: state, data_type: varchar, constraints: [{type: not_null}]}
+      - {name: ndc, data_type: varchar, constraints: [{type: not_null}]}
+      - {name: year, data_type: integer}
+      - {name: quarter, data_type: integer}
+      - {name: quarter_start, data_type: date}
+      - {name: utilization_type, data_type: varchar}
+      - {name: labeler_name, data_type: varchar}
+      - {name: product_name, data_type: varchar}
+      - {name: rebate_category, data_type: varchar}
+      - {name: category_source, data_type: varchar}
+      - {name: amp_source, data_type: varchar}
+      - {name: is_suppressed, data_type: boolean}
+      - {name: units, data_type: double}
+      - {name: prescriptions, data_type: double}
+      - {name: medicaid_reimbursed, data_type: double}
+      - {name: amp_per_unit, data_type: double}
+      - {name: basic_per_unit, data_type: double}
+      - {name: additional_per_unit, data_type: double}
+      - {name: ura_per_unit, data_type: double}
+      - {name: is_capped, data_type: boolean}
+      - {name: liability_point, data_type: double}
+      - {name: liability_high, data_type: double}
+
+  - name: fct_dispute_candidates
+    description: Utilization lines flagged for invoice dispute, one row per line per reason.
+    config:
+      contract: {enforced: true}
+    columns:
+      - {name: state, data_type: varchar}
+      - {name: ndc, data_type: varchar}
+      - {name: year, data_type: integer}
+      - {name: quarter, data_type: integer}
+      - {name: quarter_start, data_type: date}
+      - {name: utilization_type, data_type: varchar}
+      - {name: labeler_name, data_type: varchar}
+      - {name: product_name, data_type: varchar}
+      - name: reason_code
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [UOM_OUTLIER, TERMINATED_NDC, PRE_MARKET, NOT_COD, PRICE_OUTLIER]
+      - {name: reason_detail, data_type: varchar}
+      - {name: units, data_type: double}
+      - {name: prescriptions, data_type: double}
+      - {name: medicaid_reimbursed, data_type: double}
+      - {name: ura_per_unit, data_type: double}
+      - {name: dollars_at_stake, data_type: double}
+
+  - name: rpt_sensitivity
+    description: Yearly liability under every scenario in seeds/rebate_scenarios.csv.
+    config:
+      contract: {enforced: true}
+    columns:
+      - {name: year, data_type: bigint}
+      - {name: quarters, data_type: bigint}
+      - {name: scenario, data_type: varchar}
+      - {name: is_base, data_type: boolean}
+      - {name: amp_nadac_factor, data_type: double}
+      - {name: bp_discount, data_type: double}
+      - {name: pre_nadac_excess_growth, data_type: double}
+      - {name: liability_point, data_type: double}
+      - {name: liability_high, data_type: double}
+      - {name: priced_unit_share, data_type: double}
+
+  - name: rpt_validation_cms64
+    description: Base-case estimate vs CMS-64 reported national drug rebate offset.
+    config:
+      contract: {enforced: true}
+    columns:
+      - {name: year, data_type: integer}
+      - {name: cms64_national_rebate_offset, data_type: double}
+      - {name: quarters, data_type: bigint}
+      - {name: estimate_point, data_type: double}
+      - {name: estimate_high, data_type: double}
+      - {name: point_to_reported, data_type: double}
+
+unit_tests:
+  - name: ura_rules
+    description: Statutory percentages, the pre-2024 AMP cap, inflation penalty and unpriced rows.
+    model: int_ura
+    given:
+      - input: ref('rebate_scenarios')
+        rows:
+          - {scenario: base, amp_nadac_factor: 1.0, bp_discount: 0.0, pre_nadac_excess_growth: 0.0, is_base: true}
+          - {scenario: bp50, amp_nadac_factor: 1.0, bp_discount: 0.5, pre_nadac_excess_growth: 0.0, is_base: false}
+      - input: ref('int_ndc_quarter')
+        rows:
+          # generic priced from FUL, before generics paid an inflation penalty (2017)
+          - {ndc: "00000000001", quarter_start: 2016-01-01, rebate_category: N, ful_amp: 10.0, nadac_q: 12.0, nadac_unit_ok: true, nadac_anchor: 6.0, anchor_quarter: 2014-07-01, baseline_quarter: 2014-07-01, cpi_q: 100.0, cpi_anchor: 100.0, is_clotting_factor: false, is_pediatric: false}
+          # brand, no price growth: basic 23.1% only
+          - {ndc: "00000000002", quarter_start: 2023-01-01, rebate_category: S, nadac_q: 1000.0, nadac_unit_ok: true, nadac_anchor: 1000.0, anchor_quarter: 2020-01-01, baseline_quarter: 2020-01-01, cpi_q: 100.0, cpi_anchor: 100.0, is_clotting_factor: false, is_pediatric: false}
+          # clotting factor: 17.1% minimum
+          - {ndc: "00000000003", quarter_start: 2023-01-01, rebate_category: S, nadac_q: 1000.0, nadac_unit_ok: true, nadac_anchor: 1000.0, anchor_quarter: 2020-01-01, baseline_quarter: 2020-01-01, cpi_q: 100.0, cpi_anchor: 100.0, is_clotting_factor: true, is_pediatric: false}
+          # price up 10x with flat CPI: 23.1% + 90% penalty, capped at AMP before 2024
+          - {ndc: "00000000004", quarter_start: 2023-10-01, rebate_category: S, nadac_q: 1000.0, nadac_unit_ok: true, nadac_anchor: 100.0, anchor_quarter: 2015-01-01, baseline_quarter: 2015-01-01, cpi_q: 100.0, cpi_anchor: 100.0, is_clotting_factor: false, is_pediatric: false}
+          # same drug from 2024 Q1: no cap
+          - {ndc: "00000000004", quarter_start: 2024-01-01, rebate_category: S, nadac_q: 1000.0, nadac_unit_ok: true, nadac_anchor: 100.0, anchor_quarter: 2015-01-01, baseline_quarter: 2015-01-01, cpi_q: 100.0, cpi_anchor: 100.0, is_clotting_factor: false, is_pediatric: false}
+          # price rose exactly with CPI: no penalty
+          - {ndc: "00000000005", quarter_start: 2023-01-01, rebate_category: I, nadac_q: 2000.0, nadac_unit_ok: true, nadac_anchor: 1000.0, anchor_quarter: 2020-01-01, baseline_quarter: 2020-01-01, cpi_q: 200.0, cpi_anchor: 100.0, is_clotting_factor: false, is_pediatric: false}
+          # no usable price: kept, unpriced
+          - {ndc: "00000000006", quarter_start: 2023-01-01, rebate_category: S, nadac_unit_ok: false, is_clotting_factor: false, is_pediatric: false}
+          # not in NADAC: falls back to Medicaid paid per unit, no penalty basis
+          - {ndc: "00000000008", quarter_start: 2023-01-01, rebate_category: S, nadac_unit_ok: false, reimbursed_per_unit: 1000.0, is_clotting_factor: false, is_pediatric: false}
+          # NADAC in the wrong unit: not priced, even with a paid-per-unit figure
+          - {ndc: "00000000009", quarter_start: 2023-01-01, rebate_category: S, nadac_q: 5.0, nadac_unit_ok: false, reimbursed_per_unit: 1000.0, is_clotting_factor: false, is_pediatric: false}
+          # DESI 6: not rebate-eligible
+          - {ndc: "00000000007", quarter_start: 2023-01-01, rebate_category: S, cod_status: "06", nadac_q: 1000.0, nadac_unit_ok: true, nadac_anchor: 1000.0, anchor_quarter: 2020-01-01, baseline_quarter: 2020-01-01, cpi_q: 100.0, cpi_anchor: 100.0, is_clotting_factor: false, is_pediatric: false}
+    expect:
+      rows:
+        - {ndc: "00000000001", scenario: base, amp_source: FUL, is_capped: false, ura: 1.3}
+        - {ndc: "00000000001", scenario: bp50, amp_source: FUL, is_capped: false, ura: 1.3}
+        - {ndc: "00000000002", scenario: base, amp_source: NADAC, is_capped: false, ura: 231.0}
+        - {ndc: "00000000002", scenario: bp50, amp_source: NADAC, is_capped: false, ura: 500.0}
+        - {ndc: "00000000003", scenario: base, amp_source: NADAC, is_capped: false, ura: 171.0}
+        - {ndc: "00000000003", scenario: bp50, amp_source: NADAC, is_capped: false, ura: 500.0}
+        - {ndc: "00000000004", scenario: base, amp_source: NADAC, is_capped: true, ura: 1000.0}
+        - {ndc: "00000000004", scenario: bp50, amp_source: NADAC, is_capped: true, ura: 1000.0}
+        - {ndc: "00000000004", scenario: base, amp_source: NADAC, is_capped: false, ura: 1131.0}
+        - {ndc: "00000000004", scenario: bp50, amp_source: NADAC, is_capped: false, ura: 1400.0}
+        - {ndc: "00000000005", scenario: base, amp_source: NADAC, is_capped: false, ura: 462.0}
+        - {ndc: "00000000005", scenario: bp50, amp_source: NADAC, is_capped: false, ura: 1000.0}
+        - {ndc: "00000000006", scenario: base, amp_source: NONE, is_capped: false, ura: null}
+        - {ndc: "00000000006", scenario: bp50, amp_source: NONE, is_capped: false, ura: null}
+        - {ndc: "00000000008", scenario: base, amp_source: REIMBURSED, is_capped: false, ura: 231.0}
+        - {ndc: "00000000008", scenario: bp50, amp_source: REIMBURSED, is_capped: false, ura: 500.0}
+        - {ndc: "00000000009", scenario: base, amp_source: UNIT_MISMATCH, is_capped: false, ura: null}
+        - {ndc: "00000000009", scenario: bp50, amp_source: UNIT_MISMATCH, is_capped: false, ura: null}
+        - {ndc: "00000000007", scenario: base, amp_source: NADAC, is_capped: false, ura: 0.0}
+        - {ndc: "00000000007", scenario: bp50, amp_source: NADAC, is_capped: false, ura: 0.0}
+
+  - name: liability_point_and_high
+    description: Suppressed rows add to the high estimate only; unpriced rows stay null.
+    model: fct_rebate_liability
+    overrides:
+      vars: {suppressed_max_rx: 10}
+    given:
+      - input: ref('int_utilization')
+        rows:
+          - {state: AK, ndc: "00000000002", quarter_start: 2023-01-01, utilization_type: FFSU, is_suppressed: false, units: 100.0, prescriptions: 10.0, median_units_per_rx: 10.0}
+          - {state: AK, ndc: "00000000002", quarter_start: 2023-01-01, utilization_type: MCOU, is_suppressed: true, median_units_per_rx: 10.0}
+          - {state: AK, ndc: "00000000006", quarter_start: 2023-01-01, utilization_type: FFSU, is_suppressed: false, units: 50.0, prescriptions: 5.0, median_units_per_rx: 10.0}
+      - input: ref('int_ura')
+        rows:
+          - {ndc: "00000000002", quarter_start: 2023-01-01, is_base: true, ura: 2.0}
+          - {ndc: "00000000002", quarter_start: 2023-01-01, is_base: false, ura: 9.0}
+          - {ndc: "00000000006", quarter_start: 2023-01-01, is_base: true}
+      - input: ref('int_product_quarter')
+        rows: []
+    expect:
+      rows:
+        - {ndc: "00000000002", utilization_type: FFSU, liability_point: 200.0, liability_high: 200.0}
+        - {ndc: "00000000002", utilization_type: MCOU, liability_point: 0.0, liability_high: 200.0}
+        - {ndc: "00000000006", utilization_type: FFSU, liability_point: null, liability_high: null}

@@ -1,0 +1,9 @@
+gtn:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('GTN_DATA_DIR') }}/warehouse.duckdb"
+      threads: 4
+      settings:
+        memory_limit: "{{ env_var('GTN_DUCKDB_MEMORY', '8GB') }}"

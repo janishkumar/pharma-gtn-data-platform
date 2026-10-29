@@ -1,0 +1,13 @@
+scenario,amp_nadac_factor,bp_discount,pre_nadac_excess_growth,is_base
+base,1.00,0.00,0.00,true
+f090_bp000_g000,0.90,0.00,0.00,false
+f100_bp030_g000,1.00,0.30,0.00,false
+f090_bp030_g000,0.90,0.30,0.00,false
+f100_bp050_g000,1.00,0.50,0.00,false
+f090_bp050_g000,0.90,0.50,0.00,false
+f100_bp000_g005,1.00,0.00,0.05,false
+f090_bp000_g005,0.90,0.00,0.05,false
+f100_bp030_g005,1.00,0.30,0.05,false
+f090_bp030_g005,0.90,0.30,0.05,false
+f100_bp050_g005,1.00,0.50,0.05,false
+f090_bp050_g005,0.90,0.50,0.05,false

@@ -14,7 +14,4 @@ dbt/logs/
 dbt/dbt_packages/
 dbt/.user.yml
 logs/
-dashboard/node_modules/
-dashboard/.evidence/
-dashboard/build/
-dashboard/sources/gtn/*.parquet
+site/
