@@ -5,7 +5,9 @@ Medicaid rebates are usually the largest deduction between a drug manufacturer's
 This repo rebuilds that workflow on public CMS data as a tested, automatically refreshed data platform. It answers two questions a GTN or Medicaid operations team faces every quarter:
 
 1. **How much Medicaid rebate liability should we accrue?** Estimated by NDC, state and quarter, with every confidential input exposed as a scenario parameter.
-2. **Which invoice lines should we dispute?** Five rules a Medicaid team applies before paying a state, each with the rebate dollars at stake.
+2. **Which invoice lines should we dispute?** Six rules a Medicaid team applies before paying a state, each with the rebate dollars at stake.
+
+**[Open the dashboard](https://janishkumar.github.io/pharma-gtn-data-platform/)** to filter by year and manufacturer. The marts behind it are published as Parquet on each [data release](https://github.com/janishkumar/pharma-gtn-data-platform/releases).
 
 > Every figure below is a public-data estimate produced by `gtn report` (full output in [`reports/summary.md`](reports/summary.md)). It is not any manufacturer's actual liability.
 
@@ -41,6 +43,8 @@ The range runs from $28.30B to $62.81B. The base case is deliberately the conser
 | `TERMINATED_NDC`: utilization after the NDC's termination date | 36,363 | $61.0M |
 | `PRE_MARKET`: utilization before the market date | 2 | $2,473 |
 | `NOT_COD`: DESI 5/6 products, not rebate-eligible | 87 | $0 |
+
+A sixth rule, `INVALID_NDC` (utilization reported against a code that isn't an 11-digit NDC), flagged no non-suppressed lines in 2025.
 
 The largest flags are classic unit-of-measure errors. NY reported Spiriva Respimat at 3,708.1 units per prescription against a national median of 4.1 ($12.1M at stake in 2025 Q2). OR reported a Skyrizi pen at 30.2 units per prescription against 1.0 ($27.7M).
 
