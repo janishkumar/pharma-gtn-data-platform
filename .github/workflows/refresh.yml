@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write   # create the data release
+  pages: write      # deploy the dashboard
+  id-token: write
 
 concurrency:
   group: refresh
@@ -70,8 +72,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="data-$(date -u +%Y-%m-%d)"
+          tag="data-$(date -u +%Y-%m-%d)-r${{ github.run_number }}"
           cp reports/summary.md data/manifest.json dist/marts/
           gh release create "$tag" dist/marts/* \
             --title "Data $(date -u +%Y-%m-%d)" \
             --notes-file reports/summary.md
+
+      - name: Build dashboard
+        run: uv run python scripts/build_dashboard.py --out site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-dashboard:
+    needs: refresh
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

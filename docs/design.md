@@ -1,7 +1,7 @@
 # Pharma gross-to-net data platform: design
 
 Author: Janish Kumar
-Status: draft for approval, 2026-10-28
+Status: approved 2026-10-28; section 12 records changes made during the build
 
 ## 1. Why this exists
 
@@ -75,8 +75,9 @@ Liability for a row = units reimbursed x estimated URA. SDUD units are already i
 **AMP proxy (per NDC per quarter)**
 
 - Non-innovator multiple-source (category N) with a FUL row: FUL weighted average of AMPs.
-- Everything else: quarterly mean NADAC per unit x an AMP/NADAC factor (scenario parameter; default 1.00, sensitivity 0.85 to 1.05). NADAC measures what pharmacies pay, AMP what manufacturers receive from them, so they are close for brands and the factor captures the gap.
-- No proxy available: the row is kept, liability marked "unpriced", and the unpriced share of units is reported.
+- Everything else: quarterly mean NADAC per unit x an AMP/NADAC factor (scenario parameter; default 1.00, sensitivity 0.90). NADAC measures what pharmacies pay, AMP what manufacturers receive from them, so they are close for brands and the factor captures the gap. NADAC is used only when its pricing unit matches the MDRP unit type.
+- No NADAC at all (mostly clinic-administered drugs NADAC doesn't survey): national Medicaid paid per unit for that NDC-quarter x the same factor. It includes dispensing fees, so it overstates AMP for cheap drugs; it is reported as its own source.
+- No proxy available (or NADAC in the wrong unit): the row is kept, liability left empty, and the priced share of units is reported.
 
 **Basic rebate**
 
@@ -87,8 +88,10 @@ Liability for a row = units reimbursed x estimated URA. SDUD units are already i
 
 **Additional (CPI-U) rebate**
 
-- Additional = max(0, AMP_q - baseline AMP x CPI-U_q / CPI-U_baseline).
-- Baseline AMP is confidential. Proxy: the first observed AMP proxy (NADAC starts late 2013) with CPI-U from that quarter. For drugs launched before then this understates the penalty, so the output labels it a lower bound and the sensitivity table adds a scenario parameter for older drugs.
+- Additional = max(0, AMP_q - baseline AMP x CPI-U_q / CPI-U_baseline), with CPI-U taken from the month before each quarter starts.
+- Baseline quarter: first full quarter after launch, floored at 1990 Q3 (innovators) or 2014 Q3 (non-innovators, which pay the penalty from 2017 Q1).
+- Baseline AMP is confidential. The penalty is computed as a share of AMP from NADAC growth, `1 - (NADAC_anchor / NADAC_q) x (CPI_q / CPI_anchor) / (1 + g)^years(baseline -> anchor)`, where the anchor is the first NADAC observation on or after the baseline quarter and g is a scenario parameter (excess price growth over CPI before NADAC began). Being a ratio, it works whichever source supplies the current AMP. With g = 0 the penalty for drugs launched before late 2013 is a lower bound; the sensitivity table shows g = 5%.
+- Rows priced from Medicaid paid amounts have no NADAC history, so they get no penalty (also a lower bound).
 
 **Cap**
 
@@ -98,7 +101,7 @@ Liability for a row = units reimbursed x estimated URA. SDUD units are already i
 
 - Low estimate: 0 units. High: 10 prescriptions x the NDC's median units per prescription in that quarter. Liability is always reported as point, low and high.
 
-**Parameters** live in one versioned seed file (`rebate_parameters.csv`), so a scenario is a row, and the sensitivity table is a dbt model that runs every scenario.
+**Parameters** live in one versioned seed file (`rebate_scenarios.csv`), so a scenario is a row, and the sensitivity table is a dbt model that runs every scenario.
 
 ## 6. Dispute candidates
 
@@ -109,7 +112,7 @@ Rules a Medicaid operations team actually applies before paying a state invoice,
 | `UOM_OUTLIER` | Units per prescription above a threshold multiple of the NDC's national median, or a whole multiple of units per package (state billed packages, not units) |
 | `TERMINATED_NDC` | Utilization in a quarter after the NDC's termination date |
 | `PRE_MARKET` | Utilization before the market date |
-| `NOT_COD` | NDC not a covered outpatient drug per COD status |
+| `NOT_COD` | COD status 05 or 06 (DESI 5/6, not rebate-eligible) |
 | `PRICE_OUTLIER` | Medicaid amount reimbursed per unit far from NADAC per unit |
 
 Each flagged row carries the rebate dollars at stake (its estimated liability). Thresholds are parameters, and the README reports how many rows and dollars each rule flags, from code.
@@ -140,7 +143,7 @@ Stack (my calls, all local and free, no Docker and no cloud account):
 - dbt-core with dbt-duckdb: model contracts on marts, generic and singular tests, source freshness, `dbt docs` for lineage.
 - Data contracts at two layers: raw header/column checks in Python (fail the refresh if CMS changes a layout), and dbt contracts plus tests on marts.
 - Orchestration: GitHub Actions. A scheduled monthly workflow checks the catalog, downloads changed files, rebuilds, runs tests, and publishes a new data release only if tests pass. No Airflow or Dagster: a monthly batch with five sources doesn't need a scheduler service, and the README says so.
-- Dashboard: Evidence (SQL + Markdown, builds to a static site) reading the mart Parquet, deployed to GitHub Pages. If Evidence proves awkward, fall back to a small static site built by a Python script. Builder's call.
+- Dashboard: one static HTML page (`dashboard/index.html`) with the mart aggregates inlined by `scripts/build_dashboard.py`, deployed to GitHub Pages by the refresh workflow. See section 12 for why not Evidence.
 - CI (shared portfolio bar): ruff, pytest with a coverage gate, pip-audit, gitleaks, dbt build on a small fixture dataset, package build check.
 
 Full refresh downloads about 3.5 GB of SDUD. CI tests run on committed fixtures (a few hundred rows per source), not the real files.
@@ -150,7 +153,8 @@ Full refresh downloads about 3.5 GB of SDUD. CI tests run on committed fixtures 
 ```
 src/gtn_platform/        ingest, contracts, CLI
 dbt/                     models/{staging,intermediate,marts}, seeds/, tests/
-dashboard/               Evidence project
+dashboard/               static dashboard template
+scripts/                 fixture cutting, mart export, dashboard build
 tests/                   pytest, fixtures/
 docs/design.md
 .github/workflows/       ci.yml, refresh.yml, pages.yml
@@ -171,8 +175,15 @@ docs/design.md
 - **Nowcast** of the quarters SDUD has not published yet, so the platform produces an accrual for the current quarter.
 - Other GTN buckets (340B via HRSA data, Medicare Part D).
 
-## 11. Open items for the builder
+## 11. Open items
 
-- Confirm whether FUL history (earlier months) is downloadable in bulk; if not, use the current file for N drugs in recent quarters and NADAC elsewhere.
-- Confirm whether CMS-64 drug-rebate lines for FY2017 onward are downloadable from medicaid.gov in a scriptable form. If yes, extend validation beyond 2016.
-- Confirm BLS CPI-U can be fetched from a script. If BLS blocks it, commit a small CPI-U CSV with its source and a script that updates it.
+- CMS-64 drug-rebate lines for FY2017 onward: data.medicaid.gov only carries 2016. Check whether medicaid.gov's yearly FMR spreadsheets can be fetched by script; if so, extend validation.
+
+## 12. Changes made during the build
+
+- **FUL history** is in the single FUL file (monthly from April 2016), so generics get a FUL AMP in every quarter in scope, not only recent ones.
+- **CPI-U** comes from the BLS public API by POST (GET ignores the year range). BLS never published October 2025; the model falls back to the latest earlier month.
+- **Third price source.** About a fifth of Medicaid spend in a sample quarter had no NADAC price, so national Medicaid paid per unit was added as a labelled last-resort proxy (section 5).
+- **Dashboard.** Evidence's open-source template now points to a hosted CLI, so the design's fallback was used: a single static page with inlined aggregates and hand-built SVG charts. No Node build step.
+- **NADAC headers** changed from underscores to spaces in 2023; raw columns are normalised before the contract check.
+- **Some older NADAC files** defeat DuckDB's parallel CSV reader; ingest retries single-threaded.
