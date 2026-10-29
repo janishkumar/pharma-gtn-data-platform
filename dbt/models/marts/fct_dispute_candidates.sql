@@ -46,11 +46,13 @@ flagged as (
 
     union all
     select *, 'PRICE_OUTLIER',
-        format('paid {:.2f}/unit vs NADAC {:.2f}', medicaid_reimbursed / units, nadac_q)
+        format('paid {:.4f}/unit vs NADAC {:.4f}: units look overstated',
+               medicaid_reimbursed / units, nadac_q)
     from lines
+    -- Only the low side: paid far below acquisition cost means the units (and so the rebate
+    -- billed) are likely overstated. The high side is mostly dispensing fees on cheap generics.
     where nadac_q > 0 and medicaid_reimbursed > 0
-      and (medicaid_reimbursed / units / nadac_q < {{ var('price_ratio_low') }}
-        or medicaid_reimbursed / units / nadac_q > {{ var('price_ratio_high') }})
+      and medicaid_reimbursed / units / nadac_q < {{ var('price_ratio_low') }}
 )
 
 select

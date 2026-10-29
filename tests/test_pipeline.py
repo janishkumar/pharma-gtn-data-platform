@@ -89,10 +89,12 @@ def test_sensitivity_has_every_scenario_and_base_is_lowest_bp(warehouse):
 
 
 def test_validation_row_for_2016(warehouse):
-    ((year, reported, estimate),) = query(warehouse, """
-        select year, cms64_national_rebate_offset, estimate_point from rpt_validation_cms64
+    ((year, gross, offset, ffs, total),) = query(warehouse, """
+        select year, cms64_prescribed_drugs, cms64_national_rebate_offset,
+               estimate_ffs_point, estimate_point
+        from rpt_validation_cms64
     """)
-    assert year == 2016 and reported > 1e9 and estimate > 0
+    assert year == 2016 and gross > 1e10 and offset > 1e9 and 0 < ffs <= total
 
 
 def test_report_and_dashboard(warehouse, tmp_path):

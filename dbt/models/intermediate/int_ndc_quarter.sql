@@ -30,7 +30,13 @@ base as (
         n.nadac_per_unit                          as nadac_q,
         n.pricing_unit                            as nadac_pricing_unit,
         n.classification                          as nadac_classification,
-        f.ful_amp,
+        -- Drop a FUL AMP more than 10x away from NADAC either way: a unit or data error, not a price.
+        case
+            when n.nadac_per_unit is null
+                or f.ful_amp / n.nadac_per_unit between 0.1 and 10 then f.ful_amp
+        end                                       as ful_amp,
+        f.ful_amp is not null and n.nadac_per_unit is not null
+            and f.ful_amp / n.nadac_per_unit not between 0.1 and 10 as ful_rejected,
         r.reimbursed_per_unit,
         -- MDRP unit types TAB, CAP, SUP, TDP and AHF are all priced per each in NADAC.
         case p.unit_type when 'ML' then 'ML' when 'GM' then 'GM' else 'EA' end as expected_unit

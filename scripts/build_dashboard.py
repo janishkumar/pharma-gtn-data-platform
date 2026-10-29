@@ -79,6 +79,14 @@ def collect(con: duckdb.DuckDBPyConnection) -> dict:
                    sum(dollars_at_stake) as dollars
             from fct_dispute_candidates group by all order by year, dollars desc nulls last
         """),
+        # A line can break more than one rule; the headline counts it once.
+        "dispute_totals": rows(con, """
+            select year, count(*) as lines, sum(dollars_at_stake) as dollars from (
+                select distinct year, state, ndc, quarter_start, utilization_type,
+                       dollars_at_stake
+                from fct_dispute_candidates)
+            group by 1 order by 1
+        """),
         "dispute_lines": rows(con, f"""
             select year, quarter, state, ndc, product_name as product, labeler_name as labeler,
                    reason_code as reason, reason_detail as detail, dollars_at_stake as dollars

@@ -12,8 +12,7 @@ clean-targets: ["target", "dbt_packages"]
 vars:
   # Dispute thresholds (design section 6)
   uom_multiple: 10          # units/Rx above this multiple of the NDC-quarter national median
-  price_ratio_low: 0.1      # Medicaid paid per unit / NADAC per unit outside [low, high]
-  price_ratio_high: 10
+  price_ratio_low: 0.1      # Medicaid paid per unit below this share of NADAC: units overstated
   # Units/Rx imputed for a suppressed row (CMS suppresses rows under 11 prescriptions)
   suppressed_max_rx: 10
 

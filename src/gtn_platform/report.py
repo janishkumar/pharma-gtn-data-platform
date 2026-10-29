@@ -141,14 +141,19 @@ def render(s: dict) -> str:
     ]
     out += ["", f"Share of priced 2023 units whose URA hit the 100% AMP cap: "
             f"{pct(s['capped_share_2023'])}", "", "## Validation against CMS-64", "",
-            "| Year | CMS-64 national rebate offset | Estimate (point) | Estimate (high) | "
-            "Point / reported |", "|---|---|---|---|---|"]
-    out += [
-        f"| {r['year']} | {money(r['cms64_national_rebate_offset'])} | "
-        f"{money(r['estimate_point'])} | {money(r['estimate_high'])} | "
-        f"{pct(r['point_to_reported'])} |"
-        for r in s["validation"]
-    ]
+            "| Year | Check | CMS-64 | This repo | Ratio |", "|---|---|---|---|---|"]
+    for r in s["validation"]:
+        out += [
+            f"| {r['year']} | Gross: fee-for-service drug spend | "
+            f"{money(r['cms64_prescribed_drugs'])} | {money(r['sdud_ffs_reimbursed'])} | "
+            f"{pct(r['ffs_gross_ratio'])} |",
+            f"| {r['year']} | Rebate offset vs fee-for-service estimate | "
+            f"{money(r['cms64_national_rebate_offset'])} | {money(r['estimate_ffs_point'])} | "
+            f"{pct(r['ffs_estimate_to_offset'])} |",
+            f"| {r['year']} | Rebate offset vs total estimate | "
+            f"{money(r['cms64_national_rebate_offset'])} | {money(r['estimate_point'])} | "
+            f"{pct(r['total_estimate_to_offset'])} |",
+        ]
     n_lines, dollars = s["dispute_lines_distinct"]
     out += ["", f"## Dispute candidates, {y}", "",
             f"{n_lines:,} distinct lines, {money(dollars)} at stake.", "",

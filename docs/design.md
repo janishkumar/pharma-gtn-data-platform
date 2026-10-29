@@ -114,7 +114,7 @@ Rules a Medicaid operations team actually applies before paying a state invoice,
 | `PRE_MARKET` | Utilization before the market date |
 | `NOT_COD` | COD status 05 or 06 (DESI 5/6, not rebate-eligible) |
 | `INVALID_NDC` | Utilization reported against a code that isn't an 11-digit NDC (added during the build: real SDUD lines do this) |
-| `PRICE_OUTLIER` | Medicaid amount reimbursed per unit far from NADAC per unit |
+| `PRICE_OUTLIER` | Medicaid paid per unit below 10% of NADAC per unit: the units, and so the rebate billed, look overstated. (The design first flagged both sides; the high side turned out to be dispensing fees on cheap generics.) |
 
 Each flagged row carries the rebate dollars at stake (its estimated liability). Thresholds are parameters, and the README reports how many rows and dollars each rule flags, from code.
 

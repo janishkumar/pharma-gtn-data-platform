@@ -75,16 +75,21 @@ models:
       - {name: priced_unit_share, data_type: double}
 
   - name: rpt_validation_cms64
-    description: Base-case estimate vs CMS-64 reported national drug rebate offset.
+    description: SDUD and the base-case estimate vs CMS-64 reported drug spend and rebate offset.
     config:
       contract: {enforced: true}
     columns:
       - {name: year, data_type: integer}
-      - {name: cms64_national_rebate_offset, data_type: double}
       - {name: quarters, data_type: bigint}
+      - {name: cms64_prescribed_drugs, data_type: double}
+      - {name: sdud_ffs_reimbursed, data_type: double}
+      - {name: ffs_gross_ratio, data_type: double}
+      - {name: cms64_national_rebate_offset, data_type: double}
+      - {name: estimate_ffs_point, data_type: double}
       - {name: estimate_point, data_type: double}
       - {name: estimate_high, data_type: double}
-      - {name: point_to_reported, data_type: double}
+      - {name: ffs_estimate_to_offset, data_type: double}
+      - {name: total_estimate_to_offset, data_type: double}
 
 unit_tests:
   - name: ura_rules

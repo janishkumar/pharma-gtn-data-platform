@@ -1,0 +1,261 @@
+{
+  "latest_full_year": 2025,
+  "coverage": {
+    "first_quarter": "2016-01-01",
+    "last_quarter": "2026-01-01",
+    "lines": 30259849,
+    "ndcs": 85916,
+    "units": 291624194527.055,
+    "medicaid_reimbursed": 551206012881.834,
+    "suppressed_line_share": 0.5090876362271338
+  },
+  "by_year": [
+    {
+      "year": 2016,
+      "quarters": 4,
+      "liability_point": 19415391605.388325,
+      "liability_high": 21268334952.787674,
+      "priced_unit_share": 0.9965530669278668
+    },
+    {
+      "year": 2021,
+      "quarters": 4,
+      "liability_point": 27233142891.322758,
+      "liability_high": 30096006971.04763,
+      "priced_unit_share": 0.9958581186256363
+    },
+    {
+      "year": 2022,
+      "quarters": 4,
+      "liability_point": 29168022404.969803,
+      "liability_high": 32313668511.002373,
+      "priced_unit_share": 0.9963454455145635
+    },
+    {
+      "year": 2023,
+      "quarters": 4,
+      "liability_point": 32079248836.77044,
+      "liability_high": 35664195055.42751,
+      "priced_unit_share": 0.9967704684104368
+    },
+    {
+      "year": 2024,
+      "quarters": 4,
+      "liability_point": 30033203631.22028,
+      "liability_high": 33913076938.787518,
+      "priced_unit_share": 0.9959737990243759
+    },
+    {
+      "year": 2025,
+      "quarters": 4,
+      "liability_point": 31414703506.326893,
+      "liability_high": 35595340606.19696,
+      "priced_unit_share": 0.9960268862690732
+    },
+    {
+      "year": 2026,
+      "quarters": 1,
+      "liability_point": 6785616294.256986,
+      "liability_high": 7964007643.599806,
+      "priced_unit_share": 0.9971875701542138
+    }
+  ],
+  "amp_source_units": [
+    {
+      "amp_source": "FUL",
+      "units": 22912342315.064003,
+      "liability_point": 310917524.8287517
+    },
+    {
+      "amp_source": "NADAC",
+      "units": 19455581455.688995,
+      "liability_point": 25004609026.50982
+    },
+    {
+      "amp_source": "REIMBURSED",
+      "units": 3811020682.3030043,
+      "liability_point": 6099176954.987944
+    },
+    {
+      "amp_source": "UNIT_MISMATCH",
+      "units": 178035030.68799996,
+      "liability_point": 0.0
+    },
+    {
+      "amp_source": "NONE",
+      "units": 6171039.264000001,
+      "liability_point": 0.0
+    }
+  ],
+  "category": [
+    {
+      "rebate_category": "S",
+      "medicaid_reimbursed": 83927879857.8,
+      "liability_point": 27271981964.97947,
+      "rebate_to_reimbursed": 0.324945441385946
+    },
+    {
+      "rebate_category": "I",
+      "medicaid_reimbursed": 8777115107.3,
+      "liability_point": 3179806904.7267156,
+      "rebate_to_reimbursed": 0.3622838331107272
+    },
+    {
+      "rebate_category": "N",
+      "medicaid_reimbursed": 11357706003.279924,
+      "liability_point": 954470332.0476457,
+      "rebate_to_reimbursed": 0.08403724588151955
+    },
+    {
+      "rebate_category": null,
+      "medicaid_reimbursed": 36032423.26000001,
+      "liability_point": 8444304.572850093,
+      "rebate_to_reimbursed": 0.23435294684230157
+    }
+  ],
+  "capped_share_2023": 4.011849466036698e-05,
+  "sensitivity": [
+    {
+      "scenario": "f090_bp000_g000",
+      "amp_nadac_factor": 0.9,
+      "bp_discount": 0.0,
+      "pre_nadac_excess_growth": 0.0,
+      "liability_point": 28304324908.17715,
+      "liability_high": 32071027105.80871
+    },
+    {
+      "scenario": "f090_bp030_g000",
+      "amp_nadac_factor": 0.9,
+      "bp_discount": 0.3,
+      "pre_nadac_excess_growth": 0.0,
+      "liability_point": 34375691919.46171,
+      "liability_high": 39300288362.22875
+    },
+    {
+      "scenario": "f090_bp050_g000",
+      "amp_nadac_factor": 0.9,
+      "bp_discount": 0.5,
+      "pre_nadac_excess_growth": 0.0,
+      "liability_point": 51600701211.89515,
+      "liability_high": 59498116035.91538
+    },
+    {
+      "scenario": "base",
+      "amp_nadac_factor": 1.0,
+      "bp_discount": 0.0,
+      "pre_nadac_excess_growth": 0.0,
+      "liability_point": 31414703506.326893,
+      "liability_high": 35595340606.19696
+    },
+    {
+      "scenario": "f100_bp030_g000",
+      "amp_nadac_factor": 1.0,
+      "bp_discount": 0.3,
+      "pre_nadac_excess_growth": 0.0,
+      "liability_point": 38160666852.19922,
+      "liability_high": 43627853113.33083
+    },
+    {
+      "scenario": "f100_bp050_g000",
+      "amp_nadac_factor": 1.0,
+      "bp_discount": 0.5,
+      "pre_nadac_excess_growth": 0.0,
+      "liability_point": 57299566066.01371,
+      "liability_high": 66069883861.871376
+    },
+    {
+      "scenario": "f090_bp000_g005",
+      "amp_nadac_factor": 0.9,
+      "bp_discount": 0.0,
+      "pre_nadac_excess_growth": 0.05,
+      "liability_point": 33263585708.77563,
+      "liability_high": 37438516756.80917
+    },
+    {
+      "scenario": "f090_bp030_g005",
+      "amp_nadac_factor": 0.9,
+      "bp_discount": 0.3,
+      "pre_nadac_excess_growth": 0.05,
+      "liability_point": 39334952720.06018,
+      "liability_high": 44667778013.22918
+    },
+    {
+      "scenario": "f090_bp050_g005",
+      "amp_nadac_factor": 0.9,
+      "bp_discount": 0.5,
+      "pre_nadac_excess_growth": 0.05,
+      "liability_point": 56559962012.493866,
+      "liability_high": 64865605686.91611
+    },
+    {
+      "scenario": "f100_bp000_g005",
+      "amp_nadac_factor": 1.0,
+      "bp_discount": 0.0,
+      "pre_nadac_excess_growth": 0.05,
+      "liability_point": 36922808482.0043,
+      "liability_high": 41556299747.163666
+    },
+    {
+      "scenario": "f100_bp030_g005",
+      "amp_nadac_factor": 1.0,
+      "bp_discount": 0.3,
+      "pre_nadac_excess_growth": 0.05,
+      "liability_point": 43668771827.87541,
+      "liability_high": 49588812254.2964
+    },
+    {
+      "scenario": "f100_bp050_g005",
+      "amp_nadac_factor": 1.0,
+      "bp_discount": 0.5,
+      "pre_nadac_excess_growth": 0.05,
+      "liability_point": 62807671041.691154,
+      "liability_high": 72030843002.83818
+    }
+  ],
+  "validation": [
+    {
+      "year": 2016,
+      "quarters": 4,
+      "cms64_prescribed_drugs": 22807196019.0,
+      "sdud_ffs_reimbursed": 22697659039.46036,
+      "ffs_gross_ratio": 0.9951972623268381,
+      "cms64_national_rebate_offset": 12885689016.0,
+      "estimate_ffs_point": 7707916360.036131,
+      "estimate_point": 19415391605.389782,
+      "estimate_high": 21268334952.78959,
+      "ffs_estimate_to_offset": 0.5981765003381121,
+      "total_estimate_to_offset": 1.5067406625506738
+    }
+  ],
+  "disputes": [
+    {
+      "reason_code": "UOM_OUTLIER",
+      "lines": 4964,
+      "dollars_at_stake": 118470993.34713896
+    },
+    {
+      "reason_code": "PRICE_OUTLIER",
+      "lines": 5078,
+      "dollars_at_stake": 110649909.23066905
+    },
+    {
+      "reason_code": "TERMINATED_NDC",
+      "lines": 36363,
+      "dollars_at_stake": 61016353.48505932
+    },
+    {
+      "reason_code": "PRE_MARKET",
+      "lines": 2,
+      "dollars_at_stake": 2472.6455
+    },
+    {
+      "reason_code": "NOT_COD",
+      "lines": 87,
+      "dollars_at_stake": 0.0
+    }
+  ],
+  "dispute_lines_distinct": [
+    45954,
+    237573691.08779064
+  ]
+}

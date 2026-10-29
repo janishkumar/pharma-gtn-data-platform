@@ -238,7 +238,7 @@ function quarterRows(s) {
 function tiles(s) {
   const q = quarterRows(s).filter((r) => r.year === s.year);
   const point = sum(q, "point"), high = sum(q, "high"), paid = sum(q, "paid");
-  const disp = DATA.disputes.filter((r) => r.year === s.year);
+  const disp = DATA.dispute_totals.filter((r) => r.year === s.year);
   const who = s.labeler ? esc(s.labeler) : "all manufacturers";
   $("tiles").innerHTML = `
     <div class="tile"><div class="k">Estimated liability, ${s.year}</div><div class="v">${money(point)}</div>
@@ -248,7 +248,7 @@ function tiles(s) {
     <div class="tile"><div class="k">Rebate / reimbursed</div><div class="v">${pct(paid ? point / paid : null)}</div>
       <div class="s">statutory rebates only</div></div>
     <div class="tile"><div class="k">Dispute candidates</div><div class="v">${money(sum(disp, "dollars"))}</div>
-      <div class="s">${sum(disp, "lines").toLocaleString()} flagged lines · all manufacturers</div></div>`;
+      <div class="s">${sum(disp, "lines").toLocaleString()} flagged lines, each counted once · all manufacturers</div></div>`;
 }
 
 function quarterChart(s) {
@@ -357,7 +357,7 @@ function products(s) {
 function disputes(s) {
   const rows = DATA.disputes.filter((r) => r.year === s.year);
   const names = { UOM_OUTLIER: "Units/Rx far above national median", TERMINATED_NDC: "NDC terminated before quarter",
-    PRE_MARKET: "Utilization before market date", NOT_COD: "DESI 5/6, not rebate-eligible", INVALID_NDC: "Not a valid 11-digit NDC", PRICE_OUTLIER: "Paid per unit far from NADAC" };
+    PRE_MARKET: "Utilization before market date", NOT_COD: "DESI 5/6, not rebate-eligible", INVALID_NDC: "Not a valid 11-digit NDC", PRICE_OUTLIER: "Paid per unit under 10% of NADAC (units overstated)" };
   $("disputes").innerHTML = table(["Rule", "Lines", "Dollars at stake"],
     rows.map((r) => [`<code>${r.reason}</code><br><span class="sub">${names[r.reason] || ""}</span>`, r.lines.toLocaleString(), money(r.dollars)]), [1, 2]);
   const lines = DATA.dispute_lines.filter((r) => r.year === s.year).slice(0, 15);
@@ -368,11 +368,15 @@ function disputes(s) {
 
 function validation() {
   $("validation").innerHTML = DATA.validation.map((v) => `
-    <div class="tiles" style="grid-template-columns:1fr 1fr">
-      <div class="tile"><div class="k">CMS-64 reported, ${v.year}</div><div class="v">${money(v.cms64_national_rebate_offset)}</div><div class="s">federal fiscal year, cash basis</div></div>
-      <div class="tile"><div class="k">Estimate, ${v.year}</div><div class="v">${money(v.estimate_point)}</div><div class="s">${pct(v.point_to_reported)} of reported · high ${money(v.estimate_high)}</div></div>
+    <div class="tiles">
+      <div class="tile"><div class="k">Fee-for-service drug spend, ${v.year}</div><div class="v">${pct(v.ffs_gross_ratio)}</div>
+        <div class="s">SDUD ${money(v.sdud_ffs_reimbursed)} vs CMS-64 ${money(v.cms64_prescribed_drugs)}</div></div>
+      <div class="tile"><div class="k">CMS-64 national rebate offset, ${v.year}</div><div class="v">${money(v.cms64_national_rebate_offset)}</div>
+        <div class="s">federal fiscal year, cash basis</div></div>
+      <div class="tile"><div class="k">Estimate, ${v.year}</div><div class="v">${money(v.estimate_ffs_point)} / ${money(v.estimate_point)}</div>
+        <div class="s">fee-for-service / total: ${pct(v.ffs_estimate_to_offset)} / ${pct(v.total_estimate_to_offset)} of the offset</div></div>
     </div>`).join("") +
-    `<p class="sub">The gap reflects proxy prices, the inflation-penalty lower bound for older drugs, calendar vs fiscal year, and prior-period adjustments in the CMS-64 figure.</p>`;
+    `<p class="sub">Gross spend ties out, so the utilization load is complete. The rebate check brackets the offset, because the CMS-64 file doesn't say whether it includes rebates on managed-care utilization. Timing (fiscal vs calendar year, prior-period adjustments) and proxy prices also move it.</p>`;
 }
 
 function table(head, body, numeric = []) {
