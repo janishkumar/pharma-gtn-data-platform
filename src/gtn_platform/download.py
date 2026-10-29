@@ -79,11 +79,15 @@ def to_parquet(csv_path: Path, out: Path, source: str) -> int:
         header = next(csv.reader(fh))
     names = check_header(header, SOURCES[source].columns, source)
     con = duckdb.connect()
-    con.execute(
-        "create table raw as select * from read_csv(?, header=true, all_varchar=true, "
-        "names=?, quote='\"', escape='\"', strict_mode=false)",
-        [str(csv_path), names],
+    sql = (
+        "create or replace table raw as select * from read_csv(?, header=true, all_varchar=true, "
+        "names=?, quote='\"', escape='\"', strict_mode=false, parallel={})"
     )
+    try:
+        con.execute(sql.format("true"), [str(csv_path), names])
+    except duckdb.NotImplementedException:
+        # Some older NADAC files defeat the parallel reader; single-threaded reads them fine.
+        con.execute(sql.format("false"), [str(csv_path), names])
     con.execute(f"copy raw to '{out}' (format parquet, compression zstd)")
     rows = con.execute("select count(*) from raw").fetchone()[0]
     con.close()

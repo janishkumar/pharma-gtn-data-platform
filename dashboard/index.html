@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medicaid Rebate Liability</title>
+<meta name="description" content="Medicaid rebate liability estimated from public CMS data: by quarter, state, manufacturer and product, with sensitivity, dispute candidates and a CMS-64 check.">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --seq: #2a78d6;
+  --wash: rgba(42, 120, 214, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --seq: #3987e5;
+    --wash: rgba(57, 135, 229, 0.12);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --seq: #3987e5;
+  --wash: rgba(57, 135, 229, 0.12);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 8px; font-weight: 650; }
+h2 { font-size: 17px; margin: 0 0 4px; font-weight: 620; }
+p { margin: 0 0 12px; }
+.lede { color: var(--ink-2); max-width: 760px; }
+.badge {
+  display: inline-block; font-size: 12px; color: var(--ink-2);
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; margin-bottom: 16px;
+}
+.filters { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; align-items: end; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--ink-2); gap: 4px; }
+select, input {
+  font: inherit; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-width: 120px;
+}
+input { min-width: 260px; }
+button.link { font: inherit; font-size: 13px; color: var(--seq); background: none; border: 0; padding: 0; cursor: pointer; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile, .card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+}
+.tile .k { font-size: 12px; color: var(--ink-2); }
+.tile .v { font-size: 26px; font-weight: 620; margin: 2px 0; }
+.tile .s { font-size: 12px; color: var(--muted); }
+.card { margin-bottom: 16px; }
+.sub { font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } input { min-width: 0; width: 100%; } .filters label { flex: 1 1 100%; } }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-2); margin-bottom: 8px; flex-wrap: wrap; }
+.legend span::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+  margin-right: 6px; vertical-align: -1px; background: var(--c);
+}
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 560; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.base td { font-weight: 620; }
+#tip {
+  position: fixed; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); display: none; z-index: 10; max-width: 280px;
+}
+#tip b { display: block; margin-bottom: 2px; }
+footer { color: var(--ink-2); font-size: 13px; margin-top: 32px; }
+a { color: var(--seq); }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">Public-data estimate. Not any manufacturer's actual liability.</span>
+  <h1>Medicaid rebate liability</h1>
+  <p class="lede">Estimated statutory Medicaid rebates by quarter, state, manufacturer and product,
+  from CMS State Drug Utilization Data priced with FUL weighted AMPs, NADAC and Medicaid paid amounts.
+  Confidential inputs (AMP, Best Price, baseline AMP) are proxies; the sensitivity table shows how
+  much they move the total.</p>
+
+  <div class="filters">
+    <label>Year <select id="year"></select></label>
+    <label>Manufacturer (top 150 by liability)
+      <input id="labeler" list="labelers" placeholder="All manufacturers" autocomplete="off">
+      <datalist id="labelers"></datalist>
+    </label>
+    <button class="link" id="clear" type="button">Clear manufacturer</button>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card">
+    <h2>Liability by quarter</h2>
+    <div class="sub" id="q-sub"></div>
+    <div class="legend">
+      <span style="--c: var(--s1)">Single source (S)</span>
+      <span style="--c: var(--s2)">Innovator multiple source (I)</span>
+      <span style="--c: var(--s3)">Non-innovator / generic (N)</span>
+    </div>
+    <div id="qchart"></div>
+    <button class="link" id="qtable-toggle" type="button">Show as table</button>
+    <div class="tablewrap hidden" id="qtable"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Top states</h2>
+      <div class="sub" id="st-sub"></div>
+      <div id="stchart"></div>
+    </section>
+    <section class="card">
+      <h2>Dispute candidates</h2>
+      <div class="sub">Invoice lines a Medicaid team would question before paying, all manufacturers.</div>
+      <div class="tablewrap" id="disputes"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Top products</h2>
+    <div class="sub" id="p-sub"></div>
+    <div class="tablewrap" id="products"></div>
+  </section>
+
+  <section class="card">
+    <h2>Sensitivity</h2>
+    <div class="sub">Point estimate for the selected year, all manufacturers. Rows: how fast prices rose above CPI before NADAC began (sets the inflation-penalty baseline for older drugs) and the AMP / NADAC ratio. Columns: Best Price discount off AMP. Base case in bold.</div>
+    <div class="tablewrap" id="sens"></div>
+  </section>
+
+  <section class="card">
+    <h2>Check against CMS-64</h2>
+    <div class="sub">What states reported collecting as national (statutory) rebates.</div>
+    <div id="validation"></div>
+  </section>
+
+  <section class="card">
+    <h2>Largest dispute lines</h2>
+    <div class="sub" id="dl-sub"></div>
+    <div class="tablewrap" id="dlines"></div>
+  </section>
+
+  <footer>
+    <p id="foot"></p>
+    <p>Method, code and sources: <a href="https://github.com/janishkumar/pharma-gtn-data-platform">github.com/janishkumar/pharma-gtn-data-platform</a>.
+    Data: data.medicaid.gov (SDUD, NADAC, FUL, MDRP drug products, CMS-64) and BLS CPI-U, all US public domain.</p>
+  </footer>
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+const DATA = /*__DATA__*/null;
+const CATS = [["S", "--s1", "Single source"], ["I", "--s2", "Innovator multiple source"], ["N", "--s3", "Generic"]];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const money = (v) => {
+  if (v == null) return "n/a";
+  const a = Math.abs(v);
+  if (a >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+  if (a >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+  if (a >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+  return "$" + v.toFixed(0);
+};
+const pct = (v) => (v == null ? "n/a" : (v * 100).toFixed(1) + "%");
+const sum = (arr, k) => arr.reduce((t, r) => t + (r[k] || 0), 0);
+const qlabel = (r) => `${r.year} Q${r.quarter}`;
+const tip = $("tip");
+function showTip(e, html) {
+  tip.innerHTML = html; tip.style.display = "block";
+  const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+const years = [...new Set(DATA.sensitivity.map((r) => r.year))].sort();
+const fullYears = years.filter((y) => DATA.sensitivity.find((r) => r.year === y && r.is_base).quarters === 4);
+const labelers = [...new Set(DATA.labeler_quarterly.map((r) => r.labeler))].sort();
+$("year").innerHTML = years.map((y) => {
+  const q = DATA.sensitivity.find((r) => r.year === y && r.is_base).quarters;
+  return `<option value="${y}">${y}${q < 4 ? ` (${q} qtr${q > 1 ? "s" : ""})` : ""}</option>`;
+}).join("");
+$("year").value = fullYears.length ? fullYears[fullYears.length - 1] : years[years.length - 1];
+$("labelers").innerHTML = labelers.map((l) => `<option value="${esc(l)}">`).join("");
+
+const state = () => {
+  const lab = $("labeler").value.trim();
+  return { year: +$("year").value, labeler: labelers.includes(lab) ? lab : null };
+};
+
+function quarterRows(s) {
+  return s.labeler ? DATA.labeler_quarterly.filter((r) => r.labeler === s.labeler) : DATA.quarterly;
+}
+
+function tiles(s) {
+  const q = quarterRows(s).filter((r) => r.year === s.year);
+  const point = sum(q, "point"), high = sum(q, "high"), paid = sum(q, "paid");
+  const disp = DATA.disputes.filter((r) => r.year === s.year);
+  const who = s.labeler ? esc(s.labeler) : "all manufacturers";
+  $("tiles").innerHTML = `
+    <div class="tile"><div class="k">Estimated liability, ${s.year}</div><div class="v">${money(point)}</div>
+      <div class="s">up to ${money(high)} with suppressed rows · ${who}</div></div>
+    <div class="tile"><div class="k">Medicaid reimbursed (gross)</div><div class="v">${money(paid)}</div>
+      <div class="s">pharmacy claims paid by states</div></div>
+    <div class="tile"><div class="k">Rebate / reimbursed</div><div class="v">${pct(paid ? point / paid : null)}</div>
+      <div class="s">statutory rebates only</div></div>
+    <div class="tile"><div class="k">Dispute candidates</div><div class="v">${money(sum(disp, "dollars"))}</div>
+      <div class="s">${sum(disp, "lines").toLocaleString()} flagged lines · all manufacturers</div></div>`;
+}
+
+function quarterChart(s) {
+  const rows = quarterRows(s);
+  const keys = [...new Map(rows.map((r) => [qlabel(r), r])).values()]
+    .sort((a, b) => a.year - b.year || a.quarter - b.quarter);
+  const stack = keys.map((k) => {
+    const parts = CATS.map(([c]) => rows.filter((r) => r.year === k.year && r.quarter === k.quarter && r.cat === c));
+    return { key: k, vals: parts.map((p) => sum(p, "point")), high: sum(rows.filter((r) => r.year === k.year && r.quarter === k.quarter), "high") };
+  });
+  const W = Math.max($("qchart").clientWidth, 320), H = 280, m = { l: 56, r: 8, t: 12, b: 36 };
+  const max = Math.max(...stack.map((d) => d.vals.reduce((a, b) => a + b, 0)), 1);
+  const nice = niceMax(max);
+  const bw = (W - m.l - m.r) / stack.length;
+  const y = (v) => H - m.b - (v / nice) * (H - m.t - m.b);
+  let g = "";
+  for (let i = 0; i <= 4; i++) {
+    const v = (nice * i) / 4, yy = y(v);
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${yy}" y2="${yy}" stroke="var(${i ? "--grid" : "--axis"})" stroke-width="1"/>`;
+    g += `<text x="${m.l - 8}" y="${yy + 4}" text-anchor="end">${money(v)}</text>`;
+  }
+  stack.forEach((d, i) => {
+    const x = m.l + i * bw + bw * 0.18, w = Math.max(bw * 0.64, 2);
+    if (d.key.year === s.year) g += `<rect x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" fill="var(--wash)"/>`;
+    let base = 0;
+    const segs = [];
+    d.vals.forEach((v, j) => {
+      if (v <= 0) return;
+      const y0 = y(base), y1 = y(base + v);
+      segs.push({ j, y0, y1 }); base += v;
+    });
+    segs.forEach((sg, idx) => {
+      const top = idx === segs.length - 1;
+      const h = Math.max(sg.y0 - sg.y1 - (idx ? 2 : 0), 0.5);
+      g += top
+        ? `<path d="${roundTop(x, sg.y1, w, h, 4)}" fill="var(${CATS[sg.j][1]})"/>`
+        : `<rect x="${x}" y="${sg.y1}" width="${w}" height="${h}" fill="var(${CATS[sg.j][1]})"/>`;
+    });
+    g += `<rect class="hit" data-i="${i}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" fill="transparent"/>`;
+    const prev = stack[i - 1];
+    if (d.key.quarter === 1 || i === 0 || (prev && prev.key.year !== d.key.year)) {
+      g += `<text x="${m.l + i * bw + 2}" y="${H - m.b + 16}">${d.key.year}</text>`;
+    }
+  });
+  $("qchart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Quarterly liability by drug category">${g}</svg>`;
+  $("qchart").querySelectorAll(".hit").forEach((el) => {
+    el.addEventListener("mousemove", (e) => {
+      const d = stack[+el.dataset.i];
+      const tot = d.vals.reduce((a, b) => a + b, 0);
+      showTip(e, `<b>${qlabel(d.key)}</b>${CATS.map(([c, , n], j) => `${n}: ${money(d.vals[j])}`).join("<br>")}<br>Total: ${money(tot)} (high ${money(d.high)})`);
+    });
+    el.addEventListener("mouseleave", hideTip);
+  });
+  $("q-sub").textContent = (s.labeler ? s.labeler : "All manufacturers") +
+    ". Point estimate; suppressed rows excluded. SDUD years loaded: 2016 (validation) and 2021 onward.";
+  $("qtable").innerHTML = table(["Quarter", ...CATS.map((c) => c[2]), "Total", "High"],
+    stack.map((d) => [qlabel(d.key), ...d.vals.map(money), money(d.vals.reduce((a, b) => a + b, 0)), money(d.high)]), [1, 2, 3, 4, 5]);
+}
+
+function stateChart(s) {
+  const rows = DATA.states.filter((r) => r.year === s.year).slice(0, 15);
+  const W = Math.max($("stchart").clientWidth, 280), rowH = 22, m = { l: 36, r: 64, t: 4 }, H = m.t + rows.length * rowH;
+  const max = Math.max(...rows.map((r) => r.point || 0), 1);
+  let g = "";
+  rows.forEach((r, i) => {
+    const yy = m.t + i * rowH, w = ((r.point || 0) / max) * (W - m.l - m.r);
+    g += `<text x="${m.l - 6}" y="${yy + 15}" text-anchor="end">${esc(r.state)}</text>`;
+    g += `<path d="${roundRight(m.l, yy + 4, Math.max(w, 1), rowH - 8, 4)}" fill="var(--seq)"/>`;
+    g += `<text x="${m.l + w + 6}" y="${yy + 15}">${money(r.point)}</text>`;
+    g += `<rect class="hit" data-i="${i}" x="0" y="${yy}" width="${W}" height="${rowH}" fill="transparent"/>`;
+  });
+  $("stchart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Liability by state">${g}</svg>`;
+  $("stchart").querySelectorAll(".hit").forEach((el) => {
+    el.addEventListener("mousemove", (e) => {
+      const r = rows[+el.dataset.i];
+      showTip(e, `<b>${esc(r.state)}, ${s.year}</b>Liability ${money(r.point)}<br>Medicaid reimbursed ${money(r.paid)}<br>Ratio ${pct(r.paid ? r.point / r.paid : null)}`);
+    });
+    el.addEventListener("mouseleave", hideTip);
+  });
+  $("st-sub").textContent = `${s.year}, all manufacturers, point estimate.`;
+}
+
+function sensitivity(s) {
+  const rows = DATA.sensitivity.filter((r) => r.year === s.year);
+  const bps = [...new Set(rows.map((r) => r.bp))].sort((a, b) => a - b);
+  const groups = [...new Map(rows.map((r) => [`${r.growth}|${r.factor}`, r])).values()];
+  $("sens").innerHTML = `<table><thead><tr><th>Pre-2014 growth over CPI</th><th class="n">AMP / NADAC</th>${bps.map((b) => `<th class="n">Best Price gap ${(b * 100).toFixed(0)}%</th>`).join("")}</tr></thead><tbody>${
+    groups.map((g) => {
+      const cells = bps.map((b) => {
+        const r = rows.find((x) => x.growth === g.growth && x.factor === g.factor && x.bp === b);
+        return `<td class="n" style="${r && r.is_base ? "font-weight:650" : ""}">${money(r && r.point)}</td>`;
+      }).join("");
+      return `<tr><td>${(g.growth * 100).toFixed(0)}% / yr</td><td class="n">${g.factor.toFixed(2)}</td>${cells}</tr>`;
+    }).join("")}</tbody></table>`;
+}
+
+function products(s) {
+  let rows = DATA.products.filter((r) => r.year === s.year);
+  if (s.labeler) rows = rows.filter((r) => r.labeler === s.labeler);
+  rows = rows.slice(0, 25);
+  $("p-sub").textContent = `${s.year}, ${s.labeler || "all manufacturers"}, top ${rows.length} by estimated liability (from the top 300 products that year).`;
+  $("products").innerHTML = table(["Product", "Manufacturer", "Cat.", "Liability", "Medicaid reimbursed", "Rebate / reimbursed"],
+    rows.map((r) => [esc(r.product), esc(r.labeler), r.cat || "?", money(r.point), money(r.paid), pct(r.ratio)]), [3, 4, 5]);
+}
+
+function disputes(s) {
+  const rows = DATA.disputes.filter((r) => r.year === s.year);
+  const names = { UOM_OUTLIER: "Units/Rx far above national median", TERMINATED_NDC: "NDC terminated before quarter",
+    PRE_MARKET: "Utilization before market date", NOT_COD: "DESI 5/6, not rebate-eligible", PRICE_OUTLIER: "Paid per unit far from NADAC" };
+  $("disputes").innerHTML = table(["Rule", "Lines", "Dollars at stake"],
+    rows.map((r) => [`<code>${r.reason}</code><br><span class="sub">${names[r.reason] || ""}</span>`, r.lines.toLocaleString(), money(r.dollars)]), [1, 2]);
+  const lines = DATA.dispute_lines.filter((r) => r.year === s.year).slice(0, 15);
+  $("dl-sub").textContent = `${s.year}, all manufacturers, the 15 largest flagged lines by estimated rebate at stake.`;
+  $("dlines").innerHTML = table(["Quarter", "State", "NDC", "Product", "Rule", "Detail", "At stake"],
+    lines.map((r) => [`${r.year} Q${r.quarter}`, r.state, r.ndc, esc(r.product), `<code>${r.reason}</code>`, esc(r.detail), money(r.dollars)]), [6]);
+}
+
+function validation() {
+  $("validation").innerHTML = DATA.validation.map((v) => `
+    <div class="tiles" style="grid-template-columns:1fr 1fr">
+      <div class="tile"><div class="k">CMS-64 reported, ${v.year}</div><div class="v">${money(v.cms64_national_rebate_offset)}</div><div class="s">federal fiscal year, cash basis</div></div>
+      <div class="tile"><div class="k">Estimate, ${v.year}</div><div class="v">${money(v.estimate_point)}</div><div class="s">${pct(v.point_to_reported)} of reported · high ${money(v.estimate_high)}</div></div>
+    </div>`).join("") +
+    `<p class="sub">The gap reflects proxy prices, the inflation-penalty lower bound for older drugs, calendar vs fiscal year, and prior-period adjustments in the CMS-64 figure.</p>`;
+}
+
+function table(head, body, numeric = []) {
+  return `<table><thead><tr>${head.map((h, i) => `<th class="${numeric.includes(i) ? "n" : ""}">${h}</th>`).join("")}</tr></thead><tbody>${
+    body.map((r) => `<tr>${r.map((c, i) => `<td class="${numeric.includes(i) ? "n" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); return Math.ceil(v / p / 2) * 2 * p; }
+function roundTop(x, y, w, h, r) { r = Math.min(r, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+function roundRight(x, y, w, h, r) { r = Math.min(r, w, h / 2); return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`; }
+
+function render() {
+  const s = state();
+  tiles(s); quarterChart(s); stateChart(s); sensitivity(s); products(s); disputes(s);
+}
+$("year").addEventListener("change", render);
+// Charts draw at their container's pixel width; redraw when that width changes.
+let resizeTimer;
+const widths = new Map();
+const ro = new ResizeObserver((entries) => {
+  const changed = entries.some((e) => widths.get(e.target) !== e.contentRect.width);
+  entries.forEach((e) => widths.set(e.target, e.contentRect.width));
+  if (changed) { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 100); }
+});
+["qchart", "stchart"].forEach((id) => ro.observe($(id)));
+$("labeler").addEventListener("change", render);
+$("clear").addEventListener("click", () => { $("labeler").value = ""; render(); });
+$("qtable-toggle").addEventListener("click", () => {
+  const t = $("qtable"); t.classList.toggle("hidden");
+  $("qtable-toggle").textContent = t.classList.contains("hidden") ? "Show as table" : "Hide table";
+});
+$("foot").textContent = `Data through ${DATA.coverage.last_quarter.slice(0, 7)}; page generated ${DATA.generated}.`;
+validation();
+render();
+</script>
+</body>
+</html>
