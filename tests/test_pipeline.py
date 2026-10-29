@@ -46,12 +46,25 @@ def test_every_line_has_a_liability_row(warehouse):
     assert raw == fact > 0
 
 
-def test_generics_priced_from_ful_and_brands_from_nadac(warehouse):
+def test_ful_used_for_generics_unless_far_from_nadac(warehouse):
     sources = dict(query(warehouse, """
-        select rebate_category, mode(amp_source) from fct_rebate_liability
-        where rebate_category in ('N', 'S') and year >= 2023 group by 1
+        select ndc || ' ' || strftime(quarter_start, '%Y-%m'), amp_source from int_ura
+        where is_base and ndc in ('00054327099', '47335047583', '00002143380')
+          and quarter_start = date '2023-01-01'
     """))
-    assert sources == {"N": "FUL", "S": "NADAC"}
+    assert sources == {
+        "00054327099 2023-01": "FUL",    # fluticasone: FUL AMP 0.6x NADAC, used
+        "47335047583 2023-01": "NADAC",  # imatinib: FUL includes brand AMPs, 24x NADAC, rejected
+        "00002143380 2023-01": "NADAC",  # Trulicity: single source, never FUL
+    }
+
+
+def test_drug_without_nadac_priced_from_medicaid_paid(warehouse):
+    sources = {r[0] for r in query(warehouse, """
+        select distinct amp_source from int_ura where is_base and ndc = '00006302602'
+    """)}
+    # Quarters where every fixture line is suppressed have no paid amount to price from.
+    assert sources <= {"REIMBURSED", "NONE"} and "REIMBURSED" in sources
 
 
 def test_brand_inflation_penalty_present(warehouse):
