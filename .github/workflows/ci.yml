@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:   # a manual run scans the full history for secrets, not just new commits
 
 permissions:
   contents: read
